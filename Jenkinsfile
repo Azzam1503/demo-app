@@ -3,23 +3,28 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
             }
         }
 
-        stage('Run Application') {
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t demo-app .'
+            }
+        }
+
+        stage('Deploy') {
             steps {
                 sh '''
-                    pkill node || true
-                    nohup npm start > app.log 2>&1 &
+                    docker stop demo-app || true
+                    docker rm demo-app || true
+
+                    docker run -d \
+                        --name demo-app \
+                        -p 4321:4321 \
+                        demo-app
                 '''
             }
         }
