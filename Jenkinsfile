@@ -2,27 +2,32 @@ pipeline {
     agent any
 
     stages {
-
-        stage('Install Dependencies') {
+        stage('Checkout') {
             steps {
-                sh 'npm install'
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t demo-app .'
+                sh 'docker build -t demo-app:latest .'
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Load Image into Kind') {
+            steps {
+                sh 'kind load docker-image demo-app:latest --name demo-cluster'
+            }
+        }
+
+        stage('Deploy') {
             steps {
                 sh '''
-                    kind load docker-image demo-app --name demo-cluster
+                export KUBECONFIG=/var/jenkins_home/.kube/config
 
-                    kubectl rollout restart deployment demo-app
+                kubectl rollout restart deployment demo-app
 
-                    kubectl rollout status deployment demo-app
+                kubectl rollout status deployment demo-app
                 '''
             }
         }
