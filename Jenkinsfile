@@ -15,16 +15,14 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                    docker stop demo-app || true
-                    docker rm demo-app || true
+                    kind load docker-image demo-app --name demo-cluster
 
-                    docker run -d \
-                        --name demo-app \
-                        -p 4321:4321 \
-                        demo-app
+                    kubectl rollout restart deployment demo-app
+
+                    kubectl rollout status deployment demo-app
                 '''
             }
         }
